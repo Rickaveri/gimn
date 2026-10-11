@@ -1,4 +1,4 @@
-const CACHE = 'gimn-v2';
+const CACHE = 'gimn-v3';
 const ASSETS = [
   './',
   './index.html',
