@@ -18,7 +18,6 @@
 
   // ---- ChordPro parsing ----
   function parseLine(line){
-    // returns array of {chord, text}
     const segs = [];
     let i = 0, chord = null, buf = '';
     while(i < line.length){
@@ -37,7 +36,6 @@
       }
     }
     if(chord !== null || buf) segs.push({chord, text: buf});
-    if(segs.length && !segs[0].chord && segs[0].text === '') segs.shift();
     return segs;
   }
 
@@ -53,32 +51,57 @@
     });
   }
 
-  function renderBody(song, semis){
-    const lines = song.body.split('\n');
-    return lines.map(raw => {
-      const line = raw.trimEnd();
-      if(!line) return '<div class="line empty"></div>';
-      if(/^(Припев|Куплет|Бридж|Заключение|Вступление|Проигрыш|Кода|Мост|Окончание|Повтор)/i.test(line.trim())){
-        return `<div class="line header">${escapeHtml(line)}</div>`;
-      }
-      const segs = parseLine(line);
-      if(!segs.length) return '<div class="line empty"></div>';
-      const hasChords = segs.some(s => s.chord);
-      const html = segs.map(s => {
-        const ch = s.chord ? escapeHtml(transposeChord(s.chord, semis)) : '';
-        const tx = escapeHtml(s.text) || ' ';
-        return `<span class="seg${s.chord?'':' nochord'}"><span class="ch">${ch||'&nbsp;'}</span><span class="tx">${tx}</span></span>`;
-      }).join('');
-      return `<div class="line">${html}</div>`;
-    }).join('');
-  }
-
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
+  // ---- Рендер одной строки: аккорды над слогами ----
+  function renderOneLine(raw, semis){
+    const line = raw.replace(/\s+$/, '');
+    if(!line) return '<div class="line empty"></div>';
+
+    if(/^\s*(Припев|Куплет|Бридж|Заключение|Вступление|Проигрыш|Кода|Мост|Окончание|Повтор|Интро|Outro)/i.test(line)){
+      return `<div class="line header">${escapeHtml(line.trim())}</div>`;
+    }
+
+    const segs = parseLine(line);
+    if(!segs.length) return '<div class="line empty"></div>';
+
+    const hasChords = segs.some(s => s.chord);
+
+    if(!hasChords){
+      return `<div class="line"><div class="text">${escapeHtml(line)}</div></div>`;
+    }
+
+    let upper = '';
+    let text = '';
+
+    for(const seg of segs){
+      if(seg.chord){
+        const ch = transposeChord(seg.chord, semis);
+        const pos = text.length;
+        while(upper.length < pos) upper += ' ';
+        if(upper.length > pos){
+          // аккорд не помещается над текущей позицией — сдвигаем вправо
+          while(text.length < upper.length) text += ' ';
+          upper += ch;
+        } else {
+          upper += ch;
+        }
+      }
+      text += seg.text;
+    }
+
+    while(text.length < upper.length) text += ' ';
+
+    return `<div class="line"><div class="chords">${escapeHtml(upper)}</div><div class="text">${escapeHtml(text)}</div></div>`;
+  }
+
+  function renderBody(song, semis){
+    return song.body.split('\n').map(l => renderOneLine(l, semis)).join('');
+  }
+
   // ---- Search ----
-  function stripChords(s){ return s.replace(/\[[^\]]*\]/g, ''); }
   function normalize(s){
     return s.toLowerCase().replace(/ё/g,'е').replace(/[^\wа-я]+/gi,' ').trim();
   }
@@ -239,14 +262,12 @@
     renderList();
     bind();
 
-    // Open from hash
     const id = location.hash.slice(1);
     if(id && state.songs.some(s => s.id === id)){
       openSong(id);
       history.replaceState({song:id}, '', '#'+id);
     }
 
-    // Service worker
     if('serviceWorker' in navigator){
       navigator.serviceWorker.register('sw.js').catch(()=>{});
     }
