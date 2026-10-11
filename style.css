@@ -103,27 +103,47 @@ body{
 .song-controls button.active{background:var(--accent2); color:#1a1a2e; border-color:var(--accent2)}
 #transpose-val{color:var(--muted); font-size:.85rem; min-width:34px; text-align:center}
 
+/* === NEW: рендер аккордов как в песеннике === */
 .song-body{
-  font-family:ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace;
-  font-size:1rem; line-height:1.75;
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 15px;
+  line-height: 1.2;
 }
 .song-body .line{
-  display:flex; flex-wrap:wrap; white-space:pre-wrap;
-  min-height:1.75em; margin-bottom:2px;
+  margin-bottom: 14px;
 }
-.song-body .line.empty{min-height:.9em}
-.song-body .line.header{color:var(--accent2); font-weight:700; margin-top:14px}
-.seg{
-  display:inline-flex; flex-direction:column; vertical-align:bottom;
-  white-space:pre;
+.song-body .line.empty{
+  height: 6px;
+  margin-bottom: 6px;
 }
-.seg .ch{
-  color:var(--chord); font-weight:700; font-size:.82em;
-  line-height:1.15; height:1.15em; letter-spacing:.02em;
+.song-body .line.header{
+  color: var(--accent2);
+  font-weight: 700;
+  margin-top: 18px;
+  margin-bottom: 10px;
+  font-family: inherit;
+  font-size: 1rem;
 }
-.seg .tx{line-height:1.5em}
-.seg.nochord .ch{visibility:hidden}
-
-@media (max-width:420px){
-  .song-body{font-size:.95rem}
+.song-body .line .chords{
+  color: var(--chord);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.15;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.song-body .line .chords:empty{
+  display: none;
+}
+.song-body .line .text{
+  color: var(--text);
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+@media (max-width: 420px){
+  .song-body{ font-size: 14px; }
+  .song-body .line .chords{ font-size: 13px; }
+  .song-body .line{ margin-bottom: 12px; }
 }
